@@ -2,8 +2,10 @@ from adk.agents import LlmAgent
 from adk.llms import GcpVertexAiLlm, CacheConfig, RetryConfig
 from adk.planners import ReactPlanner
 from adk.planners.thinking import ThinkingConfig
+from adk.state import State
 from adk.tools import tool
 from src.tools import data_gatherer_tools, task_execution_tools
+import os
 
 
 @tool
@@ -12,6 +14,8 @@ def bug_analysis_tool(issue_description: str) -> str:
     bug_analyzer = LlmAgent(
         llm=GcpVertexAiLlm(
             model="gemini-1.5-flash-001",
+            project=os.environ.get("GOOGLE_CLOUD_PROJECT"),
+            location=os.environ.get("GOOGLE_CLOUD_LOCATION"),
             retry_config=RetryConfig(retry_limit=3),
             cache_config=CacheConfig(enable_cache=True),
         ),
@@ -28,11 +32,15 @@ def bug_analysis_tool(issue_description: str) -> str:
     return bug_analyzer.invoke(issue_description)
 
 
-def create_task_execution_agent():
+def create_task_execution_agent(site_id: str):
     """Creates the task execution agent."""
     return LlmAgent(
+        name="TaskExecutionAgent",
+        description="Analyzes bugs and creates bug reports.",
         llm=GcpVertexAiLlm(
             model="gemini-1.5-flash-001",
+            project=os.environ.get("GOOGLE_CLOUD_PROJECT"),
+            location=os.environ.get("GOOGLE_CLOUD_LOCATION"),
             retry_config=RetryConfig(retry_limit=3),
             cache_config=CacheConfig(enable_cache=True),
         ),
@@ -47,4 +55,5 @@ def create_task_execution_agent():
             enable_thinking=True,
             thought_llm_config_override={"temperature": 0.2},
         ),
+        state=State({"site_id": site_id}),
     )

@@ -3,13 +3,18 @@ from adk.llms import GcpVertexAiLlm, CacheConfig, RetryConfig
 from adk.planners import ReactPlanner
 from adk.planners.thinking import ThinkingConfig
 from src.tools import data_gatherer_tools
+import os
 
 
 def create_data_gatherer_agent():
     """Creates the data gatherer agent."""
     return LlmAgent(
+        name="DataGathererAgent",
+        description="Gathers data about website performance.",
         llm=GcpVertexAiLlm(
             model="gemini-1.5-flash-001",
+            project=os.environ.get("GOOGLE_CLOUD_PROJECT"),
+            location=os.environ.get("GOOGLE_CLOUD_LOCATION"),
             retry_config=RetryConfig(retry_limit=3),
             cache_config=CacheConfig(enable_cache=True),
         ),
